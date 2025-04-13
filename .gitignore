@@ -1,0 +1,25 @@
+# Ignore virtual environments
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# VSCode project settings (if you're using it)
+.vscode/
+
+# Environment variable files (optional)
+.env
+.env.local
+
+# Logs
+*.log
