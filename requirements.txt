@@ -1,5 +1,6 @@
 opencv-python
 mediapipe
-flask            # or fastapi
-google-generativeai
-Pillow
+win10toast-click
+python-dotenv
+google
+PIL

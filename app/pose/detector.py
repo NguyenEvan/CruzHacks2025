@@ -25,6 +25,7 @@ def process_frame(frame, pose_model):
     """
     # Convert to RGB for MediaPipe
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image_height, image_width, _ = rgb.shape
     rgb.flags.writeable = False
     results = pose_model.process(rgb)
     rgb.flags.writeable = True

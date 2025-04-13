@@ -23,3 +23,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+.saved_versions/
+saved_versions/

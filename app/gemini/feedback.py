@@ -1,86 +1,60 @@
-
 import platform
 import subprocess
-
+from win10toast_click import ToastNotifier 
 import cv2
 import mediapipe as mp
 import time
 from math import degrees, acos
-
-
+# import google.generativeai as genai
+from dotenv import load_dotenv
+import os
 from google import genai
+from google.genai import types
 
-# # Initialize Gemini API
-# gen.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your actual API key
-# model = gen.GenerativeModel('gemini-pro')
-
-# client = genai.Client(api_key="AIzaSyAXFxDw2-tKAbE0CzICyr_r3Wp2lbPaU6M")
-
-# response = client.models.generate_content(
-#     model="gemini-2.0-flash", contents="Explain how AI works in a few words"
-# )
-# print(response.text)
+import PIL.Image
 
 
-def analyze_posture_with_gemini(features):
-    """Sends posture features to Gemini API for analysis."""
-    if not features:
-        return None
-    prompt = f"""Analyze the following body posture features to determine if the person is likely slouching. 
+def analyze_posture_with_gemini(pil_image):
+    load_dotenv()  # Load variables from .env file
+    api_key = os.getenv("GEMINI_API_KEY")
+    client = genai.Client(api_key=api_key)
 
-    Features:
-    - Shoulder Angle (degrees): {features.get('shoulder_angle', 'N/A')}
-    - Head Forward Displacement (relative z): {features.get('head_forward_displacement', 'N/A')}
-    - Trunk Inclination (degrees from vertical): {features.get('trunk_inclination', 'N/A')}
-    - Left Ear-Shoulder Horizontal Distance (relative x): {features.get('left_ear_shoulder_x', 'N/A')}
-    - Right Ear-Shoulder Horizontal Distance (relative x): {features.get('right_ear_shoulder_x', 'N/A')}
+    prompt = f"""Analyze the person's body posture and give some feedback 
+    on what's specifically wrong with the posture and 3 bullet points of actional steps to improve the posture. 
+    Be specific in your response, limit it to 4-5 sentences. 
 
-    Use the above features to compute a slouching score between 0 (no slouch) and 1 (strong slouch).
-    Then, determine if the person is slouching (score >= 0.75 means slouching).
+    #     Features You May Want to Observe:
+    #     - Shoulder Angle 
+    #     - Head Forward Displacement 
+    #     - Trunk Inclination (degrees from vertical)
+    #     - Left Ear-Shoulder Horizontal Distance (relative x)
+    #     - Right Ear-Shoulder Horizontal Distance (relative x): 
+    #     - Anything else you observe!
 
-    Respond ONLY with the final result in the EXACT following format:
-    [slouching score: <number between 0 and 1>, is_slouching: <true or false>]
+    #     Use reasoning to come up with actionable steps the person can take to fix their posture.
+    #         - e.g. Move your shoulders back, tilt your head up, stop tilting your head to the side etc.
+    #     Write your diagnosis as if you are addressing the person in the picture. 
+    #     Don't include markdown formatting, such as asterisks.
+    #     Use bullet points.
+    #     """
+    # image = PIL.Image.open('Screenshot 2024-02-20 220151.png')
+    # print("image type", image)
 
-    Use reasoning to come up with the score, but Do NOT output any reasoning, explanation, or any additional text.
-    """
+    # print ("pil image type", type(pil_image))
+    # print("pil image", pil_image)
 
 
-    client = genai.Client(api_key="AIzaSyAXFxDw2-tKAbE0CzICyr_r3Wp2lbPaU6M")
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[prompt, pil_image])
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=prompt
-        )
-        if response.text:
-            response_text = response.text
-            print(f"Gemini Response: {response_text}")
-            # Implement more sophisticated parsing based on Gemini's response format
-            slouching_score = None
-            is_slouching = False
-            if "slouching score:" in response_text.lower():
-                try:
-                    start_index = len("[slouching score: ")
-                    end_index = response_text.index(',')
-                    score_str = float(response_text[start_index: end_index])     
-                except ValueError:
-                    print("Could not parse slouching score.")
-            if "is_slouching: true" in response_text.lower():
-                is_slouching = True
-            elif "is_slouching: false" in response_text.lower():
-                is_slouching = False
+    print(response.text)
 
-            
-            return {"score": slouching_score, "is_slouching": is_slouching}
-        else:
-            print("Gemini API response was empty.")
-            return None
-    except Exception as e:
-        print(f"Error communicating with Gemini API: {e}")
-        return None
+    return response.text
 
 def send_posture_alert():
     message = "You're slouching! Sit up straight for better posture 🧍"
-    
+    title = "Posture Alert"
     system = platform.system()
     
     if system == "Darwin":  # macOS
@@ -95,4 +69,12 @@ def send_posture_alert():
         ])
     
     elif system == "Windows":
-        print(f"Notification: {message}")
+        toaster = ToastNotifier()
+        toaster.show_toast(
+            title,
+            message,
+            duration=5,         # seconds
+            threaded=True       # allows notification while your main loop runs
+        )
+
+       
